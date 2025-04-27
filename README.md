@@ -12,13 +12,8 @@ cmake --build /path/to/build-dir/
 
 Windows:
 ```bash
-cmake -S /path/to/source-dir/ -B /path/to/build-dir/
+cmake -G 'MinGW Makefiles' -S /path/to/source-dir/ -B /path/to/build-dir/
 cmake --build /path/to/build-dir/ --config Release
-```
-
-To run the executable:
-```bash
-./path/to/build-dir/OrthHitDetection <text file> <x> <y>
 ```
 
 ### Overview
