@@ -6,19 +6,19 @@ This program can be built using `CMake` as follows:
 
 Unix-like and MacOS:
 ```bash
-cmake -DCMAKE_BUILD_TYPE=Release -S <path to source dir> -B <path to build dir>
-cmake --build <path to build dir> 
+cmake -DCMAKE_BUILD_TYPE=Release -S /path/to/source-dir/ -B /path/to/build-dir/
+cmake --build /path/to/build-dir/ 
 ```
 
 Windows:
 ```bash
-cmake -S <path to source dir> -B <path to build dir>
-cmake --build <path to build dir> --config Release
+cmake -S /path/to/source-dir/ -B /path/to/build-dir/
+cmake --build /path/to/build-dir/ --config Release
 ```
 
 To run the executable:
 ```bash
-./<path to build dir>/OrthHitDetection <text file> <x> <y>
+./path/to/build-dir/OrthHitDetection <text file> <x> <y>
 ```
 
 ### Overview
