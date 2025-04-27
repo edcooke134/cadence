@@ -5,6 +5,8 @@
 
 Impl::Impl(const std::string& fileName) : m_fileName(fileName) {}
 
+// Method for reading in a file in the given format
+// The format is assumed to be correct, exit if it is not
 bool Impl::readFile() {
     m_outline.clear();
     m_cuts.clear();
@@ -25,6 +27,7 @@ bool Impl::readFile() {
 
         while (std::getline(file, buf)) {
             if (size_t found = buf.find(' '); found != std::string::npos) {
+                // Parse the line into two strings and handle accordingly
                 first = buf.substr(0, found);
                 second = buf.substr(found + 1);
 
@@ -79,25 +82,10 @@ bool Impl::readFile() {
         return false;
     }
 
-
-
-        // OUTPUT TEST
-    std::cout << "OUTLINE: ";
-    for (auto& el : m_outline)
-        std::cout << el.x() << " " << el.y() << " ";
-    std::cout << std::endl;
-
-    std::cout << "CUTS:" << std::endl;
-    for (auto& cut : m_cuts) {
-        std::cout << "CUT: ";
-        for (auto& el : cut) {
-            std::cout << el.x() << " " << el.y() << " ";
-        }
-    } 
-    std::cout << std::endl;
     return true;
 }
 
+// Method to check whether a point is inside the polygon from the file
 bool Impl::contains(const int2& point) {
     // Check whether the point is inside the cuts, ignore edges
     for (const auto& cut : m_cuts) {
@@ -116,22 +104,20 @@ bool Impl::detectWithEarClipping(Polygon poly, const int2& point, bool ignoreEdg
 
     // If we do not want to include the edges, check that the point is not on the edge
     if (ignoreEdges) {
-        for (int i = 0; i + 1 < poly.size(); ++i) {
-            if (isColinear(poly[i], point, poly[i + 1])) {
-                std::cout << "hit colin check, ret false" << std::endl; /// REMOVE!!
+        for (int i = 0; i + 1 < poly.size(); ++i)
+            if (isColinear(poly[i], point, poly[i + 1]))
                 return false;
-            }
-        }
+
         // Check the closing edge of the polygon
         if (isColinear(poly.front(), point, poly.back()))
             return false;
     }
 
-    int count = 0;
+    int infCheck = 0;
     const bool clockwise = isClockwise(poly);
-    std::cout << "clockwise: " << clockwise << std::endl; /// REMOVE
+
     // Ear clipping
-    while (poly.size() > 2 && count < 10000) {
+    while (poly.size() > 2 && infCheck < 10000) {
         // Iterate through points until we find an ear
         for (size_t i = 0; i < poly.size(); ++i) {
             // Find the indices before and after i, wrapping if necessary
@@ -139,21 +125,16 @@ bool Impl::detectWithEarClipping(Polygon poly, const int2& point, bool ignoreEdg
             const size_t lastIdx = (i == poly.size() - 1 ? 0 : i + 1);
 
             const Polygon ear {poly[firstIdx], poly[i], poly[lastIdx]};
-            std:: cout << "test ear: " << ear[0].x() << " " << ear[0].y() << " " << ear[1].x() << " " << ear[1].y() << " " << ear[2].x() << " " << ear[2].y() << std::endl; /// REMOVE
 
             // Check the point isn't colinear (and therefore the ear has no area)
             if (isColinear(ear[0], ear[1], ear[2])) {
-                std::cout << "removed co linear point " << ear[1].x() << " " << ear[1].y() << std::endl; /// REMOVE
                 poly.erase(poly.begin() + i);
                 break;
             }
 
             // Check the angle at the vertex at index i is convex
-            if(!isAngleConvex(ear[0], ear[1], ear[2], clockwise)) {
-                std::cout << "angle is concave!!!!" << std::endl; /// REMOVE!
+            if(!isAngleConvex(ear[0], ear[1], ear[2], clockwise))
                 continue;
-            }
-
 
             // Check no other points are in the ear
             bool hit = false;
@@ -162,65 +143,66 @@ bool Impl::detectWithEarClipping(Polygon poly, const int2& point, bool ignoreEdg
                 if (j != firstIdx && j != i && j != lastIdx) {
                     if (earContains(ear, poly[j])) {
                         hit = true;
-                        std::cout << "ear contains point: " << poly[j].x() << " " << poly[j].y() << std::endl; /// REMOVE
                         break;
                     }
                 }
             }
+
             // If no other points of the polygon lie inside, then we have found an ear
             if (!hit) {
                 // Perform hit detection
-                std::cout << "ear found!!!" << std::endl; /// REMOVE
-                if (earContains(ear, point)) {
-                    std::cout << "ear contains point, return true" << std::endl; /// REMOVE
+                if (earContains(ear, point))
                     return true;
-                }
+
                 poly.erase(poly.begin() + i);
                 break;
             }
         }
         // Prevent an inf loop
-        count++;
+        infCheck++;
     }
     return false;
 }
 
 // This algorithm returns true if the point is within the ear OR on the boundary
-    // Note that the area calculation does not half the result to keep integer precision
-    bool Impl::earContains(const Polygon& ear, const int2& point) const {
-        if (ear.size() != 3)
-            return false;
-        const int2 A = ear[0];
-        const int2 B = ear[1];
-        const int2 C = ear[2];
+// Note that the area calculation does not half the result to maintain integer precision
+bool Impl::earContains(const Polygon& ear, const int2& point) const {
+    if (ear.size() != 3)
+        return false;
 
-        // ABC area x2
-        const int area = triangleAreaDoubled(A, B, C);
-        // PAB area x2
-        const int PAB = triangleAreaDoubled(point, A, B);
-        // PBC area x2
-        const int PBC = triangleAreaDoubled(point, B, C);
-        // PAC area x2
-        const int PAC = triangleAreaDoubled(point, A, C);
-        
+    const int2 A = ear[0];
+    const int2 B = ear[1];
+    const int2 C = ear[2];
+
+    // ABC area x2
+    const int area = triangleAreaDoubled(A, B, C);
+    // PAB area x2
+    const int PAB = triangleAreaDoubled(point, A, B);
+    // PBC area x2
+    const int PBC = triangleAreaDoubled(point, B, C);
+    // PAC area x2
+    const int PAC = triangleAreaDoubled(point, A, C);
+
     return area == PAB + PBC + PAC;
-    }
+}
 
-    // Check whether the angle between BA and BC is convex
-    bool Impl::isAngleConvex(const int2& A, const int2& B, const int2& C, bool clockwise) const {
-        const int xProduct = (A.x() - B.x()) * (C.y() - B.y()) - (A.y() - B.y()) * (C.x() - B.x());
-        return clockwise ? xProduct > 0 : xProduct < 0;
-    }
+// Check whether the angle between BA and BC is convex
+bool Impl::isAngleConvex(const int2& A, const int2& B, const int2& C, bool clockwise) const {
+    const int xProduct = (A.x() - B.x()) * (C.y() - B.y()) - (A.y() - B.y()) * (C.x() - B.x());
+    return clockwise ? xProduct > 0 : xProduct < 0;
+}
 
-    // Check the winding order of the polygon
-    bool Impl::isClockwise(const Polygon& poly) const {
-        if (poly.size() < 3)
-            return false;
-        int count = 0;
-        for (int i = 0; i + 1 < poly.size(); ++i) {
-            count += (poly[i + 1].x() - poly[i].x()) * (poly[i + 1].y() + poly[i].y());
-        }
-        count += (poly.front().x() - poly.back().x()) * (poly.front().y() + poly.back().y());
+// Check the winding order of the polygon
+bool Impl::isClockwise(const Polygon& poly) const {
+    if (poly.size() < 3)
+        return false;
 
-        return count > 0;
-    }
+    int count = 0;
+    for (int i = 0; i + 1 < poly.size(); ++i)
+        count += (poly[i + 1].x() - poly[i].x()) * (poly[i + 1].y() + poly[i].y());
+
+    // check the closing edge
+    count += (poly.front().x() - poly.back().x()) * (poly.front().y() + poly.back().y());
+
+    return count > 0;
+}
