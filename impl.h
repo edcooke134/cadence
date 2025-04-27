@@ -17,11 +17,13 @@ public:
 private:
     bool detectWithEarClipping(Polygon poly, const int2& point, bool ignoreEdges = false) const;
     bool earContains(const Polygon& ear, const int2& point) const;
+    bool isAngleConvex(const int2& A, const int2& B, const int2& C, bool clockwise) const;
+    bool isClockwise(const Polygon& poly) const;
 
-    inline int earAreaDoubled(const int2& A, const int2& B, const int2& C) const {
+    inline int triangleAreaDoubled(const int2& A, const int2& B, const int2& C) const {
         return std::abs(A.x() * (B.y() - C.y()) + B.x() * (C.y() - A.y()) + C.x() * (A.y() - B.y()));
     }
-    inline bool colinearCheck(const int2& A, const int2& B, const int2& C) const {
+    inline bool isColinear(const int2& A, const int2& B, const int2& C) const {
         return (B.y() - A.y()) * (C.x() - B.x()) == (C.y() - B.y()) * (B.x() - A.x());
     }
 

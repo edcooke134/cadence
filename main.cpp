@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdlib.h>
-#include <vector>
 #include "int2.h"
 #include "impl.h"
 
@@ -12,15 +11,17 @@ int main(int argc, char* argv[]) {
     }
 
     const std::string fileName = argv[1];
-    const int x = atoi(argv[2]);
-    const int y = atoi(argv[3]);
-
-    std::cout << "file name: " << fileName << ", X: " << x << ", Y: " << y << std::endl;
+    const int2 point(atoi(argv[2]), atoi(argv[3])); 
 
     Impl impl(fileName);
-    const bool ret = impl.contains({x, y});
+    if(!impl.readFile()) {
+        std::cout << "Failed to read file " << fileName << "." << std::endl;
+        return 0;
+    }
 
-    std::cout << "Point " << x << "," << y << " is "
+    const bool ret = impl.contains(point);
+
+    std::cout << "Point " << point.x() << "," << point.y() << " is "
                         << (ret ? "INSIDE" : "OUTSIDE") << " the shape" << std::endl;
 
     return ret;
